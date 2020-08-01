@@ -19,6 +19,7 @@ import io.airlift.slice.Slices;
 import org.testng.annotations.Test;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.Collections;
 
 import static io.airlift.slice.SizeOf.SIZE_OF_LONG;
@@ -606,7 +607,14 @@ public class TestUnscaledDecimal128Arithmetic
     private static void assertCompare(Slice left, Slice right, int expectedResult)
     {
         assertEquals(compare(left, right), expectedResult);
-        assertEquals(compare(left.getLong(0), left.getLong(SIZE_OF_LONG), right.getLong(0), right.getLong(SIZE_OF_LONG)), expectedResult);
+        if (ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
+            Slice rleft = UnscaledDecimal128Arithmetic.reverseDecimal(left);
+            Slice rright = UnscaledDecimal128Arithmetic.reverseDecimal(right);
+            assertEquals(compare(rleft.getLong(SIZE_OF_LONG), rleft.getLong(0), rright.getLong(SIZE_OF_LONG), rright.getLong(0)), expectedResult);
+        }
+        else {
+            assertEquals(compare(left.getLong(0), left.getLong(SIZE_OF_LONG), right.getLong(0), right.getLong(SIZE_OF_LONG)), expectedResult);
+        }
     }
 
     private static void assertConvertsUnscaledBigIntegerToDecimal(BigInteger value)
